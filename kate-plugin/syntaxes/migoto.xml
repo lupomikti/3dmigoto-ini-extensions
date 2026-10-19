@@ -3,7 +3,7 @@
   <!ENTITY setstmt "(?!\b(?:hash|[vhdgpc]s|(?:override|cache|storage)_directory|include(?:_recursive)?|exclude_recursive|{{(?:done_|toggle_)hunting|next_marking_mode|mark_snapshot|(?:previous|next|mark)_(?:pixel|vertex|compute|geometry|domain|hull)shader|(?:previous|next|mark)_(?:index|vertex)buffer|(?:previous|next)_(?:index|vertex)buffer_slot|(?:previous|next|mark)_rendertarget|take_screenshot|reload_fixes|(?:reload|wipe_user)_config|show_original|monitor_performance|freeze_performance_monitor|tune[123]_(?:up|down)|analyse_frame|toggle_full_screen|force_full_screen_on_key|run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|draw(?:indexed|instanced|indexedinstanced|instancedindirect|indexedinstancedindirect)?|dispatch(?:indirect)?|vb\d|ib|(?:[rf]_)?bb|s?o\d|od|(?&lt;!$)[xyzw]\d{0,3}|this|(?:ini|stereo)params|cursor_(?:mask|color)|Resource.+)\b)[\w\[\]]+\s*=\s*(?:[^&quot;\\/\s\r\n]+|[^\s\r\n]+|[^\r\n]+)">
   <!ENTITY spsetstmt "(?:\b(?:hash|[vhdgpc]s|(?:override|cache|storage)_directory|include(?:_recursive)?|exclude_recursive|{{(?:done_|toggle_)hunting|next_marking_mode|mark_snapshot|(?:previous|next|mark)_(?:pixel|vertex|compute|geometry|domain|hull)shader|(?:previous|next|mark)_(?:index|vertex)buffer|(?:previous|next)_(?:index|vertex)buffer_slot|(?:previous|next|mark)_rendertarget|take_screenshot|reload_fixes|(?:reload|wipe_user)_config|show_original|monitor_performance|freeze_performance_monitor|tune[123]_(?:up|down)|analyse_frame|toggle_full_screen|force_full_screen_on_key)\b)\s*=\s*[^\r\n]+">
 ]>
-<language name="Migoto" alternativenames="3DM-INI" version="12" kateversion="5.94" section="Scripts" extensions="*.ini;*.3dm;*.migoto" casesensitive="0" license="GPL-3.0" priority="2">
+<language name="Migoto" alternativenames="3DM-INI" version="13" kateversion="5.94" section="Scripts" extensions="*.ini;*.3dm;*.migoto" casesensitive="0" license="GPL-3.0" priority="2">
   <highlighting>
     <!-- #region @keywords -->
     <!-- #region Language Constants -->
@@ -1199,6 +1199,7 @@
         <IncludeRules context="ResourceUsageExpression"/>
         <!-- Integer -->
         <RegExpr attribute="Integer" context="#stay" String="[+\-]?\b\d+\b"/>
+        <DetectChar attribute="Operator" context="#stay" char=","/>
       </context>
       <!-- #endregion Instruction Statements -->
 
@@ -1272,6 +1273,7 @@
         <!-- Resources -->
         <IncludeRules context="Resources"/>
         <!-- Shader Identifiers, must match after Resources -->
+        <RegExpr attribute="LanguageVariable" context="(property access ctx)" insensitive="true" String="\b[vhdgpc]s(?=-&gt;)"/>
         <keyword attribute="LanguageVariable" String="shader-identifiers"/>
         <!-- Numbered Scissor Rectangle -->
         <RegExpr attribute="LanguageVariable" insensitive="true" String="\bscissor\d+_(?:left|top|right|bottom)\b"/>
@@ -1293,7 +1295,7 @@
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" name="VariableNamespaceValue">
-        <RegExpr attribute="Namespace" context="#pop!NamespacedVariableIdentifier" insensitive="true" String="[^=$\r\n]+(?=\\)"/>
+        <RegExpr attribute="Namespace" context="#pop!NamespacedVariableIdentifier" insensitive="true" String="[^\\=$\r\n]+(?:\\[\w.]+)*(?=\\)"/>
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" name="NamespacedVariableIdentifier">
@@ -1329,7 +1331,7 @@
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" name="ResourceSectionNamespaceValue">
-        <RegExpr attribute="Namespace" context="#pop!NamespacedResourceSectionIdentifier" insensitive="true" String="[^=$\r\n]+(?=\\)"/>
+        <RegExpr attribute="Namespace" context="#pop!NamespacedResourceSectionIdentifier" insensitive="true" String="[^\\=$\r\n]+(?:\\[\w.]+)*(?=\\)"/>
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" fallthroughContext="#pop!ResourceSectionIdentifier" name="NamespacedResourceSectionIdentifier">
@@ -1346,7 +1348,7 @@
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" name="PoolSectionNamespaceValue">
-        <RegExpr attribute="Namespace" context="#pop!NamespacedPoolSectionIdentifier" insensitive="true" String="[^=$\r\n]+(?=\\)"/>
+        <RegExpr attribute="Namespace" context="#pop!NamespacedPoolSectionIdentifier" insensitive="true" String="[^\\=$\r\n]+(?:\\[\w.]+)*(?=\\)"/>
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" fallthroughContext="#pop!ResourceSectionIdentifier" name="NamespacedPoolSectionIdentifier">
@@ -1356,13 +1358,24 @@
 
       <context attribute="Function" lineEndContext="#pop" fallthroughContext="#pop!ResourceSectionIdentifier" name="MaybeSuffixedPoolSectionIdentifier">
         <RegExpr attribute="Function" context="(array index ctx)" insensitive="true" String="[^/&amp;!&gt;|&lt; $=,\[\]\r\n]+(?=\[)"/>
-        <RegExpr attribute="Function" context="#pop!(property acccess ctx)" insensitive="true" String="[^/&amp;!&gt;|&lt; $=,\[\]\r\n]+(?=-&gt;)"/>
-        <RegExpr attribute="Function" context="#pop!(property acccess ctx)" insensitive="true" String="(?&lt;=\])(?=-&gt;)"/>
+        <RegExpr attribute="Function" context="#pop!(property access ctx)" insensitive="true" String="[^/&amp;!&gt;|&lt; $=,\[\]\r\n]+(?=-&gt;)"/>
+        <StringDetect attribute="Operator" context="#pop!(property access ctx)" lookAhead="true" String="-&gt;"/>
       </context>
 
       <context attribute="Normal Text" lineEndContext="#pop" fallthroughContext="#pop" name="(property access ctx)">
         <StringDetect attribute="Operator" context="#stay" insensitive="true" String="-&gt;"/>
-        <DetectIdentifier attribute="Normal Text" context="#pop"/>
+        <RegExpr attribute="Property" context="#pop!(property call ctx)" String="\w+(?=\()"/>
+        <DetectIdentifier attribute="Property" context="#pop"/>
+      </context>
+
+      <context attribute="Normal Text" lineEndContext="#pop" fallthroughContext="#pop" name="(property call ctx)">
+        <DetectChar attribute="Symbol" context="#pop!(property arguments ctx)" char="("/>
+      </context>
+
+      <context attribute="Normal Text" lineEndContext="#pop" name="(property arguments ctx)">
+        <DetectChar attribute="Symbol" context="#pop" char=")"/>
+        <DetectChar attribute="Operator" context="#stay" char=","/>
+        <IncludeRules context="OperationalExpression"/>
       </context>
 
       <context attribute="Normal Text" lineEndContext="#stay" fallthroughContext="#stay" name="(array index ctx)">
@@ -1381,6 +1394,8 @@
 
       <!-- #region Values -->
       <context attribute="Normal Text" lineEndContext="#pop" name="Resources">
+        <!-- Built-in resources with a property access or method call, e.g. vb0->Offset, ps-t0->Region(0, 16) -->
+        <RegExpr attribute="LanguageVariable" context="(property access ctx)" insensitive="true" String="\b(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb|[pc]s-u\d|s?o\d|od|[vhdgpc]s-t\d{1,3}|this|(?:ini|stereo)params|cursor_(?:mask|color))(?=-&gt;)"/>
         <!-- Includes ConstantBufferSlot, VertexBufferSlot, IndexBuffer, and BackBuffers -->
         <RegExpr attribute="LanguageVariable" insensitive="true" String="\b(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b"/>
         <!-- TextureSlot, UAVSlot, Render targets -->
@@ -1439,6 +1454,7 @@
       <itemData name="Instruction" defStyleNum="dsPreprocessor" bold="true" spellchecking="false"/>
       <itemData name="Function" defStyleNum="dsFunction" spellchecking="false"/>
       <itemData name="Variable" defStyleNum="dsVariable" spellchecking="false"/>
+      <itemData name="Property" defStyleNum="dsVariable" spellchecking="false"/>
       <itemData name="LanguageVariable" defStyleNum="dsBuiltIn" italic="true" spellchecking="false"/>
       <itemData name="LanguageConstant" defStyleNum="dsConstant" italic="true" spellchecking="false"/>
       <itemData name="ShaderParameter" defStyleNum="dsExtension" italic="true" spellchecking="false"/>

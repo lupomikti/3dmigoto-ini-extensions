@@ -13,7 +13,7 @@ kvp_section_names = '\s*(?:(?:Resource|Key|Preset).+(?=\s*\])|Include.*(?=\s*\])
 special_section_names = '\s*(?:Constants|(?:Pool|ShaderRegex).+(?=\s*\]))'
 ws = '[ \t]'
 namespace_path = '[^\s>\\|\/<?:*="$][^>\\|\/<?:*=$\r\n]+(?:[\\\/][^>\\|\/<?:*=$\r\n]+)*'
-namespace = '[^=$&>|<\r\n]+'
+namespace = '[^\\=$\r\n]+(?:\\[\w.]+)*'
 custom_section_name = '[^=$,\r\n]+'
 var = '[a-z_]\w+|[a-z]'
 ident = '[a-z0-9]\w+'
@@ -37,6 +37,15 @@ resource_copy_targets = '''
   [vgdhpcsturfibo\-\d_]+\b|
   this\b|(?:ini|stereo)params\b|cursor_(?:mask|color)\b|
   (?:Resource|Pool)[^=\r\n]+
+'''
+property_operand = '''
+  (?:
+    [vhdgpc]s-cb\d{1,2} | vb\d | ib | (?:[rf]_)?bb |
+    [pc]s-u\d | s?o\d | od | [vhdgpc]s-t\d{1,3} |
+    this | (?:ini|stereo)params | cursor_(?:mask|color) |
+    [vhdgpc]s |
+    (?:Resource|Pool) (?:\\{{namespace}}\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ (?: \[ [^\r\n\[\]]+ \] )?
+  )
 '''
 resource_copy_targets_non_slot = '''
   (?:vb\d|ib|(?:[rf]_)?bb|s?o\d|od)\b|
@@ -897,8 +906,8 @@ match = '''(?xi)
 ^{{ws}}*
 (?=
   (?: (?:pre|post) \s+)?
-  [^\r\n]+ -> \w+\( .+ \)
-  \s* = \s*
+  \b {{property_operand}} -> \w+ \( [^()\r\n]* \)
+  \s* =(?!=) \s*
   [^\r\n]+
 )'''
 push = [
@@ -1320,14 +1329,15 @@ scope = "variable.language.shader-identifier.migoto"
 match = '(?i)\b[vhdgpc]s\b'
 
 [[contexts.property-access-expr]]
-match = '(?xi)(?= [^\r\n]+ -> \w+ )(?!\\)'
+match = '(?xi)(?= \b {{property_operand}} -> \w+ )'
 push = [
   {meta_scope = "meta.expression.property-access"},
   {
-    match = '(?xi)(?= \b {{resource_copy_targets}} -> \w+ )',
+    match = '(?xi)(?= \b {{property_operand}} -> \w+ )',
     push = [
       {include = "resource"},
       {include = "resource-pool-base"},
+      {include = "shader-identifier"},
       {
         match = '(?i)(->)(\w+)\b',
         captures.1 = "keyword.operator.accessor.migoto",
@@ -1339,7 +1349,7 @@ push = [
 ]
 
 [[contexts.resource-property-method-call]]
-match = '(?xi)(?= [^\r\n]+ -> \w+ \( )'
+match = '(?xi)(?= \b {{property_operand}} -> \w+ \( )'
 push = [
   {meta_scope = "meta.function-call.resource-property"},
   {include = "property-access-expr"},
@@ -1352,6 +1362,8 @@ push = [
         scope = "meta.enum-value.hlsl support.type.hlsl-semantic.migoto",
         match = '''(?xi)\b {{hlsl_semantics}} \b''',
       },
+      {include = "scalar-variable"},
+      {include = "operator"},
       {
         match = '\)',
         captures.0 = "punctuation.parenthesis.end.migoto",
@@ -1362,7 +1374,7 @@ push = [
 ]
 
 [[contexts.builtin-function-call]]
-match = '(?xi)(?! [^\r\n]+ -> ) (?= \w+ \( )'
+match = '(?xi)(?<! -> ) (?= \b \w+ \( )'
 push = [
   {meta_scope = "meta.function-call"},
   {

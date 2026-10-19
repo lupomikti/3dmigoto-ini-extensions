@@ -467,9 +467,16 @@ name = "meta.statement.assignment.migoto"
 match = '''(?xi)
 ^[ \t]* # optional leading whitespace
 (?:(pre|post)\s+)? # pre and post modifiers, optional
-( [^\r\n]+ -> \w+\( .+ \) ) # a property access method call
+( \b(?:
+    [vhdgpc]s-cb\d{1,2} | vb\d | ib | (?:[rf]_)?bb |
+    [pc]s-u\d | s?o\d | od | [vhdgpc]s-t\d{1,3} |
+    this | (?:ini|stereo)params | cursor_(?:mask|color) |
+    [vhdgpc]s |
+    Resource (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ |
+    Pool (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ (?: \[ [^\r\n\[\]]+ \] )?
+  ) -> \w+ \( [^()\r\n]* \) ) # a property access method call
 \s*
-(=) # assignment operator, surrounded by optional whitespace
+(=)(?!=) # assignment operator, surrounded by optional whitespace
 \s*
 ([^\r\n]+) # dgxi format or an integer
 (?:$|\n)'''
@@ -782,7 +789,14 @@ match = '\b(?i)([vhdgpc]s)\b'
 [repository.property-access-expression]
 name = "meta.expression.property-access"
 match = '''(?xi)
-([^\r\n]+) # resource operand
+( \b(?:
+    [vhdgpc]s-cb\d{1,2} | vb\d | ib | (?:[rf]_)?bb |
+    [pc]s-u\d | s?o\d | od | [vhdgpc]s-t\d{1,3} |
+    this | (?:ini|stereo)params | cursor_(?:mask|color) |
+    [vhdgpc]s |
+    Resource (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ |
+    Pool (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ (?: \[ [^\r\n\[\]]+ \] )?
+  ) ) # resource or shader operand
 (->)
 (\w+) # property name
 (?!\\)
@@ -790,13 +804,21 @@ match = '''(?xi)
 captures.1.patterns = [
   {include = "#resource"},
   {include = "#resource-pool-base"},
+  {include = "#shader-identifier"},
 ]
 captures.2.name = "keyword.operator.accessor.migoto"
 captures.3.name = "variable.object.property.migoto"
 
 [repository.resource-property-method-call]
 name = "meta.function-call.resource-property"
-begin = '(?xi) ([^\r\n]+ -> \w+) ( \( )'
+begin = '''(?xi) ( \b(?:
+    [vhdgpc]s-cb\d{1,2} | vb\d | ib | (?:[rf]_)?bb |
+    [pc]s-u\d | s?o\d | od | [vhdgpc]s-t\d{1,3} |
+    this | (?:ini|stereo)params | cursor_(?:mask|color) |
+    [vhdgpc]s |
+    Resource (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ |
+    Pool (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? [^-/&!>|<( )$=,\[\]\r\n\\]+ (?: \[ [^\r\n\[\]]+ \] )?
+  ) -> \w+ ) ( \( )'''
 beginCaptures.1.patterns = [{include = "#property-access-expression"}]
 beginCaptures.2.name = "punctuation.parenthesis.begin.migoto"
 end = '\)'
@@ -804,11 +826,13 @@ endCaptures.0.name = "punctuation.parenthesis.end.migoto"
 patterns = [
   {include = "#constant"},
   {include = "#hlsl-semantic"},
+  {include = "#variable"},
+  {include = "#operator"},
 ]
 
 [repository.builtin-function-call]
 name = "meta.function-call"
-begin = '(?xi) (?! [^\r\n]+ -> ) (\w+) ( \( )'
+begin = '(?xi) (?<! -> ) \b (\w+) ( \( )'
 beginCaptures.1.name = "support.function.builtin.migoto"
 beginCaptures.2.name = "punctuation.parenthesis.begin.migoto"
 end = '\)'
@@ -820,13 +844,13 @@ name = "meta.variable.named"
 match = '''(?xi)
 (\$)
 (?! Pool
-  (?:\\[^=$\r\n]+\\)?
+  (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?
   (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
   (?: \[ [^\r\n\[\]]+ \] )
 )
 (?:
   ([a-z_]\w+|[a-z]) |
-  (\\[^=$\r\n]+\\) ([a-z_]\w+|[a-z_])
+  (\\[^\\=$\r\n]+(?:\\[\w.]+)*\\) ([a-z_]\w+|[a-z_])
 )'''
 # captures for a normal variable
 captures.1.name = "punctuation.definition.variable.migoto"
@@ -840,7 +864,7 @@ name = "meta.variable.pooled"
 match = '''(?xi)
 (\$)
 ( Pool
-  (?:\\[^=$\r\n]+\\)?
+  (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?
   (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
   (?: \[ [^\r\n\[\]]+ \] )
 )(?!\\)'''
@@ -863,7 +887,7 @@ captures.3.patterns = [{include = "#section-identifier"}]
 
 [repository.custom-resource]
 name = "meta.variable.custom-resource"
-match = '''\b(?i)(Resource)(\\[^=$\r\n]+\\)?([^-/&!>|<( )$=,\[\]\r\n]+)(?!\\)'''
+match = '''\b(?i)(Resource)(\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?([^-/&!>|<( )$=,\[\]\r\n]+)(?!\\)'''
 captures.1.name = "entity.name.tag.migoto"
 captures.2.patterns = [{include = "#namespace"}]
 captures.3.patterns = [{include = "#resource-identifier"}]
@@ -872,7 +896,7 @@ captures.3.patterns = [{include = "#resource-identifier"}]
 name = "meta.variable.resource-pool"
 match = '''\b(?xi)
 (Pool)
-(\\[^=$\r\n]+\\)?
+(\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?
 ([^-/&!>|<( )$=,\[\]\r\n]+)
 (?!\\)'''
 captures.1.name = "entity.name.tag.migoto"
@@ -882,7 +906,7 @@ captures.3.patterns = [{include = "#resource-identifier"}]
 [repository.resource-pool]
 name = "meta.variable.resource-pool"
 match = '''\b(?xi)
-( Pool (?:\\[^=$\r\n]+\\)? (?: [^-/&!>|<( )$=,\[\]\r\n]+ ) )
+( Pool (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? (?: [^-/&!>|<( )$=,\[\]\r\n]+ ) )
 ( \[ [^\r\n\[\]]+ \] )
 (?!\\)'''
 captures.1.patterns = [{include = "#resource-pool-base"}]

@@ -782,7 +782,7 @@ match = '\b(?i)([vhdgpc]s)\b'
 [repository.property-access-expression]
 name = "meta.expression.property-access"
 match = '''(?xi)
-([^\r\n]+) # resource operand
+([a-z][^\r\n]+?) # resource operand
 (->)
 (\w+) # property name
 (?!\\)

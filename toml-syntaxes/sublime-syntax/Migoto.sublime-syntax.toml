@@ -1320,7 +1320,7 @@ scope = "variable.language.shader-identifier.migoto"
 match = '(?i)\b[vhdgpc]s\b'
 
 [[contexts.property-access-expr]]
-match = '(?xi)(?= [^\r\n]+ -> \w+ )(?!\\)'
+match = '(?xi)(?= [a-z][^\r\n]+? -> \w+ )(?!\\)'
 push = [
   {meta_scope = "meta.expression.property-access"},
   {

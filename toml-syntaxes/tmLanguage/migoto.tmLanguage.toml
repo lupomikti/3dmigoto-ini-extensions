@@ -469,7 +469,7 @@ match = '''(?xi)
 (?:(pre|post)\s+)? # pre and post modifiers, optional
 ( [a-z][^\r\n]+? -> \w+\( .+? \) ) # a property access method call
 \s*
-(=) # assignment operator, surrounded by optional whitespace
+(=(?!=)) # assignment operator, surrounded by optional whitespace
 \s*
 ([^\r\n]+) # dgxi format or an integer
 (?:$|\n)'''
@@ -492,7 +492,7 @@ match = '''(?xi)
   (?: Resource | Pool ) [^=\r\n]+
 )   # a resource operand
 \s*
-(=) # assignment operator, surrounded by optional whitespace
+(=(?!=)) # assignment operator, surrounded by optional whitespace
 \s*
 ([^\r\n]+) # resource usage expression
 (?:$|\n)'''
@@ -790,6 +790,7 @@ match = '''(?xi)
 captures.1.patterns = [
   {include = "#resource"},
   {include = "#resource-pool-base"},
+  {include = "#shader-identifier"},
 ]
 captures.2.name = "keyword.operator.accessor.migoto"
 captures.3.name = "variable.object.property.migoto"

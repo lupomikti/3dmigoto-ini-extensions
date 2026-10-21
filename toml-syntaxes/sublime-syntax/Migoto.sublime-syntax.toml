@@ -898,7 +898,7 @@ match = '''(?xi)
 (?=
   (?: (?:pre|post) \s+)?
   [a-z][^\r\n]+? -> \w+\( .+? \)
-  \s* = \s*
+  \s* =(?!=) \s*
   [^\r\n]+
 )'''
 push = [
@@ -934,12 +934,8 @@ match = '''(?xi)
 ^{{ws}}*
 (?=
   (?: (?:pre|post) \s+)?
-  \b(
-    [vgdhpcsturfibo\-\d_]+\b |
-    this\b | (?:ini|stereo)params\b | cursor_(?:mask|color)\b |
-    (?: Resource | Pool ) [^=\r\n]+
-  )
-  \s* = \s*
+  \b( {{resource_copy_targets}} )
+  \s* =(?!=) \s*
   [^\r\n]+
 )'''
 push = [
@@ -1328,6 +1324,7 @@ push = [
     push = [
       {include = "resource"},
       {include = "resource-pool-base"},
+      {include = "shader-identifier"},
       {
         match = '(?i)(->)(\w+)\b',
         captures.1 = "keyword.operator.accessor.migoto",

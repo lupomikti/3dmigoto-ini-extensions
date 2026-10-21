@@ -467,14 +467,14 @@ name = "meta.statement.assignment.migoto"
 match = '''(?xi)
 ^[ \t]* # optional leading whitespace
 (?:(pre|post)\s+)? # pre and post modifiers, optional
-( [^\r\n]+ -> \w+\( .+ \) ) # a property access method call
+( [a-z][^\r\n]+? -> \w+\( .+? \) ) # a property access method call
 \s*
 (=) # assignment operator, surrounded by optional whitespace
 \s*
 ([^\r\n]+) # dgxi format or an integer
 (?:$|\n)'''
 captures.1.name = "meta.command-list.priority keyword.control.directive.migoto"
-captures.2.patterns = [{include = "#resource-property-method-call"}]
+captures.2.patterns = [{include = "#property-method-call"}]
 captures.3.name = "keyword.operator.assignment.migoto"
 captures.4.patterns = [
   {include = "#constant"},
@@ -613,7 +613,7 @@ captures.10.name = "constant.numeric.migoto"
 [repository.resource-usage-expression]
 patterns = [
   {include = "#resource-usage-modifier"},
-  {include = "#resource-property-method-call"},
+  {include = "#property-method-call"},
   {include = "#resource"},
   {include = "#resource-pool-base"},
 ]
@@ -760,7 +760,7 @@ match = '''(?xi)
 include = "#function-call"
 
 [[repository.function-call.patterns]]
-include = "#resource-property-method-call"
+include = "#property-method-call"
 
 [[repository.function-call.patterns]]
 include = "#builtin-function-call"
@@ -794,20 +794,18 @@ captures.1.patterns = [
 captures.2.name = "keyword.operator.accessor.migoto"
 captures.3.name = "variable.object.property.migoto"
 
-[repository.resource-property-method-call]
-name = "meta.function-call.resource-property"
-begin = '(?xi) ([^\r\n]+ -> \w+) ( \( )'
+[repository.property-method-call]
+begin = '(?xi) ([a-z][^\r\n]+? -> \w+) ( \( )'
 beginCaptures.1.patterns = [{include = "#property-access-expression"}]
 beginCaptures.2.name = "punctuation.parenthesis.begin.migoto"
 end = '\)'
 endCaptures.0.name = "punctuation.parenthesis.end.migoto"
 patterns = [
-  {include = "#constant"},
   {include = "#hlsl-semantic"},
+  {include = "#static-operational-expression"},
 ]
 
 [repository.builtin-function-call]
-name = "meta.function-call"
 begin = '(?xi) (?! [^\r\n]+ -> ) (\w+) ( \( )'
 beginCaptures.1.name = "support.function.builtin.migoto"
 beginCaptures.2.name = "punctuation.parenthesis.begin.migoto"
@@ -957,7 +955,8 @@ match = '(?i)\b(?:true|false|yes|no|on|off)\b'
 [repository.static-value]
 patterns = [
   {include = "#static-runtime-parameter"},
-  {include = "#named-variable"},
+  # Pools can be set to static, so they are valid in static operational expressions
+  {include = "#variable"},
   {include = "#constant"},
 ]
 

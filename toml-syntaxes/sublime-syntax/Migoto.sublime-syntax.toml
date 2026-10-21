@@ -897,7 +897,7 @@ match = '''(?xi)
 ^{{ws}}*
 (?=
   (?: (?:pre|post) \s+)?
-  [^\r\n]+ -> \w+\( .+ \)
+  [a-z][^\r\n]+? -> \w+\( .+? \)
   \s* = \s*
   [^\r\n]+
 )'''
@@ -907,7 +907,7 @@ push = [
     match = '(?i)\b(pre|post)\b',
     scope = "meta.command-list.priority keyword.control.directive.migoto",
   },
-  {include = "resource-property-method-call"},
+  {include = "property-method-call"},
   {
     match = '=',
     scope = "keyword.operator.assignment.migoto",
@@ -1133,7 +1133,7 @@ meta_scope = "meta.expression.resource-usage.migoto"
 include = "resource-usage-modifier"
 
 [[contexts.resource-usage-expr]]
-include = "resource-property-method-call"
+include = "property-method-call"
 
 [[contexts.resource-usage-expr]]
 include = "resource"
@@ -1300,7 +1300,7 @@ match = '''(?xi)
 include = "function-call"
 
 [[contexts.function-call]]
-include = "resource-property-method-call"
+include = "property-method-call"
 
 [[contexts.function-call]]
 include = "builtin-function-call"
@@ -1338,20 +1338,19 @@ push = [
   },
 ]
 
-[[contexts.resource-property-method-call]]
-match = '(?xi)(?= [^\r\n]+ -> \w+ \( )'
+[[contexts.property-method-call]]
+match = '(?xi)(?= [a-z][^\r\n]+? -> \w+ \( )'
 push = [
-  {meta_scope = "meta.function-call.resource-property"},
   {include = "property-access-expr"},
   {
     match = '\(',
     captures.0 = "punctuation.parenthesis.begin.migoto",
     push = [
-      {include = "constant"},
       {
         scope = "meta.enum-value.hlsl support.type.hlsl-semantic.migoto",
         match = '''(?xi)\b {{hlsl_semantics}} \b''',
       },
+      {include = "static-operational-expr"},
       {
         match = '\)',
         captures.0 = "punctuation.parenthesis.end.migoto",
@@ -1364,7 +1363,6 @@ push = [
 [[contexts.builtin-function-call]]
 match = '(?xi)(?! [^\r\n]+ -> ) (?= \w+ \( )'
 push = [
-  {meta_scope = "meta.function-call"},
   {
     match = '(?i)\w+(?=\()',
     scope = "support.function.builtin.migoto",
@@ -1663,8 +1661,9 @@ match = '(?i)\b(?:true|false|yes|no|on|off)\b'
 [[contexts.static-value]]
 include = "static-runtime-parameter"
 
+# Pools can be set to static, so they are valid in static operational expressions
 [[contexts.static-value]]
-include = "named-variable"
+include = "scalar-variable"
 
 [[contexts.static-value]]
 include = "constant"

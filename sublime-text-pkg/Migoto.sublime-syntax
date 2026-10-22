@@ -14,8 +14,9 @@ variables:
   special_section_names: \s*(?:Constants|(?:Pool|ShaderRegex).+(?=\s*\]))
   ws: "[ \\t]"
   namespace_path: '[^\s>\\|\/<?:*="$][^>\\|\/<?:*=$\r\n]+(?:[\\\/][^>\\|\/<?:*=$\r\n]+)*'
-  namespace: "[^=$&>|<\\r\\n]+"
-  custom_section_name: "[^=$,\\r\\n]+"
+  namespace: "[^\\\\=$\\r\\n]+(?:\\\\[\\w.]+)*"
+  custom_resource_name: "[^-\\\\/&!>|<( )$=,\\[\\]\\r\\n]+"
+  custom_section_name: "[^=$\\\\,\\r\\n]+"
   var: "[a-z_]\\w+|[a-z]"
   ident: "[a-z0-9]\\w+"
   line_end_context: (?:\n|(?<=\n))
@@ -565,15 +566,15 @@ contexts:
         ^{{ws}}*
         (?=
           (?: (?:pre|post) \s+)?
-          [^\r\n]+ -> \w+\( .+ \)
-          \s* = \s*
+          [a-z][^\r\n]+? -> \w+\( [^()\r\n]*? \)
+          \s* =(?!=) \s*
           [^\r\n]+
         )
       push:
         - meta_scope: meta.statement.assignment.migoto
         - match: (?i)\b(pre|post)\b
           scope: meta.command-list.priority keyword.control.directive.migoto
-        - include: resource-property-method-call
+        - include: property-method-call
         - match: =
           scope: keyword.operator.assignment.migoto
           push:
@@ -589,12 +590,8 @@ contexts:
         ^{{ws}}*
         (?=
           (?: (?:pre|post) \s+)?
-          \b(
-            [vgdhpcsturfibo\-\d_]+\b |
-            this\b | (?:ini|stereo)params\b | cursor_(?:mask|color)\b |
-            (?: Resource | Pool ) [^=\r\n]+
-          )
-          \s* = \s*
+          \b( {{resource_copy_targets}} )
+          \s* =(?!=) \s*
           [^\r\n]+
         )
       push:
@@ -681,7 +678,7 @@ contexts:
         - meta_scope: meta.expression.blend-state.migoto
         - match: (?i)\b(add|(?:rev_)?subtract|min|max|disable)\b
           scope: meta.keyword.blend-operator keyword.operator.migoto
-        - match: \b(?i)(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b
+        - match: (?i)\b(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b
           scope: meta.keyword.blend-factor keyword.other.migoto
         - match: "{{line_end_context}}"
           pop: true
@@ -719,7 +716,7 @@ contexts:
   resource-usage-expr:
     - meta_scope: meta.expression.resource-usage.migoto
     - include: resource-usage-modifier
-    - include: resource-property-method-call
+    - include: property-method-call
     - include: resource
     - include: resource-pool-base
   resource-usage-modifier:
@@ -784,18 +781,18 @@ contexts:
           pop: true
   resource:
     - scope: variable.language.buffer.migoto
-      match: \b(?i)(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b
+      match: (?i)\b(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b
     - scope: variable.language.shader-slot.migoto
-      match: \b(?i)([pc]s-u\d|s?o\d|od|[vhdgpc]s(?:-t\d{1,3}))\b
+      match: (?i)\b([pc]s-u\d|s?o\d|od|[vhdgpc]s(?:-t\d{1,3}))\b
     - scope: variable.language.resource-identifier.migoto
-      match: \b(?i)(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b
+      match: (?i)\b(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b
     - include: custom-resource
     - include: resource-pool
   operand:
     - include: constant
-    - match: \b(?i)D3D11_BIND_\w+\b
+    - match: (?i)\bD3D11_BIND_\w+\b
       scope: meta.enum-value.directx variable.otherenummember.migoto
-    - match: \b(?i)DXGI_FORMAT_\w+\b
+    - match: (?i)\bDXGI_FORMAT_\w+\b
       scope: meta.enum-value.directx support.type.dxgi-format.migoto
     - include: scalar-variable
     - include: ini-parameter
@@ -804,7 +801,7 @@ contexts:
     - include: resource-pool-base
     - include: shader-identifier
     - scope: constant.language.scissor-rectangle.migoto
-      match: \b(?i)(scissor\d+_(?:left|top|right|bottom))\b
+      match: (?i)\b(scissor\d+_(?:left|top|right|bottom))\b
     - scope: constant.language.runtime-parameter.migoto
       match: >-
         (?xi)
@@ -818,7 +815,7 @@ contexts:
         )\b
     - include: function-call
   function-call:
-    - include: resource-property-method-call
+    - include: property-method-call
     - include: builtin-function-call
   scalar-variable:
     - include: named-variable
@@ -830,39 +827,38 @@ contexts:
     - scope: variable.language.shader-identifier.migoto
       match: (?i)\b[vhdgpc]s\b
   property-access-expr:
-    - match: (?xi)(?= [^\r\n]+ -> \w+ )(?!\\)
+    - match: (?xi)(?= [a-z][^\r\n]+? -> \w+ )(?!\\)
       push:
         - meta_scope: meta.expression.property-access
         - match: (?xi)(?= \b {{resource_copy_targets}} -> \w+ )
           push:
             - include: resource
             - include: resource-pool-base
+            - include: shader-identifier
             - match: (?i)(->)(\w+)\b
               captures:
                 "1": keyword.operator.accessor.migoto
                 "2": variable.object.property.migoto
               pop: 2
-  resource-property-method-call:
-    - match: (?xi)(?= [^\r\n]+ -> \w+ \( )
+  property-method-call:
+    - match: (?xi)(?= [a-z][^\r\n]+? -> \w+ \( )
       push:
-        - meta_scope: meta.function-call.resource-property
         - include: property-access-expr
         - match: \(
           captures:
             "0": punctuation.parenthesis.begin.migoto
           push:
-            - include: constant
             - scope: meta.enum-value.hlsl support.type.hlsl-semantic.migoto
               match: (?xi)\b {{hlsl_semantics}} \b
+            - include: static-operational-expr
             - match: \)
               captures:
                 "0": punctuation.parenthesis.end.migoto
               pop: 2
   builtin-function-call:
-    - match: (?xi)(?! [^\r\n]+ -> ) (?= \w+ \( )
+    - match: (?xi)(?<! -> ) (?= \b \w+ \( )
       push:
-        - meta_scope: meta.function-call
-        - match: (?i)\w+(?=\()
+        - match: (?i)\b\w+(?=\()
           scope: support.function.builtin.migoto
         - match: \(
           captures:
@@ -877,8 +873,8 @@ contexts:
     - match: |-
         (?xi)
         (?! \$Pool
-          (?: \\[^=$\r\n]+\\ )?
-          (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
+          (?: \\{{namespace}}\\ )?
+          (?: {{custom_resource_name}} )
           (?: \[ [^\r\n\[\]]+ \] )
         )
         (?= \$ (?:\\{{namespace}}\\)? (?:{{var}}) \b )
@@ -897,8 +893,8 @@ contexts:
     - match: |-
         (?xi)
         (?= \$Pool
-          (?: \\[^=$\r\n]+\\ )?
-          (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
+          (?: \\{{namespace}}\\ )?
+          (?: {{custom_resource_name}} )
           (?: \[ [^\r\n\[\]]+ \] )
         )(?!\\)
       push:
@@ -1032,7 +1028,7 @@ contexts:
       match: "{{custom_section_name}}"
   resource-identifier:
     - scope: entity.name.class.migoto
-      match: "[^-/&!>|<( )$=,\\[\\]\\r\\n]+"
+      match: "{{custom_resource_name}}"
   ini-parameter:
     - scope: variable.parameter.migoto
       match: (?i)\b(?:(?<!$)[xyzw]\d{0,3})\b
@@ -1074,7 +1070,7 @@ contexts:
       match: (?i)\b(?:true|false|yes|no|on|off)\b
   static-value:
     - include: static-runtime-parameter
-    - include: named-variable
+    - include: scalar-variable
     - include: constant
   fixed-value:
     - scope: meta.fixed-value variable.other.enummember.migoto

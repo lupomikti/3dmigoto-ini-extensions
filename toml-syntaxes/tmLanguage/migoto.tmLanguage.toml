@@ -2,7 +2,7 @@
 #:tombi schema.strict = false
 
 "$schema" = "https://www.schemastore.org/tmlanguage.json"
-version = "3.2.0"
+version = "3.3.0"
 scopeName = "source.migoto"
 name = "migoto"
 fileTypes = ["ini", "3dm", "migoto"]
@@ -292,7 +292,7 @@ match = '''(?xi)
 captures.1.name = "meta.keyword.shader.key keyword.other.migoto"
 captures.2.name = "punctuation.separator.key-value.migoto"
 captures.3.patterns = [
-  {name = "constant.language.null.migoto", match = '\b(?i)(null)\b'},
+  {name = "constant.language.null.migoto", match = '(?i)\bnull\b'},
   {include = "#path-value"},
 ]
 
@@ -467,7 +467,7 @@ name = "meta.statement.assignment.migoto"
 match = '''(?xi)
 ^[ \t]* # optional leading whitespace
 (?:(pre|post)\s+)? # pre and post modifiers, optional
-( [a-z][^\r\n]+? -> \w+\( .+? \) ) # a property access method call
+( [a-z][^\r\n]+? -> \w+\( [^()\r\n]*? \) ) # a property access method call
 \s*
 (=(?!=)) # assignment operator, surrounded by optional whitespace
 \s*
@@ -560,19 +560,19 @@ match = '(?i)\s*\b(?:(\w+)\s+(\w+)\s+(\w+)|(disable))\s*$'
 captures.1.patterns = [
   {
     name = "meta.keyword.blend-operator keyword.operator.migoto",
-    match = '\b(?i)(add|(?:rev_)?subtract|min|max)\b',
+    match = '(?i)\b(add|(?:rev_)?subtract|min|max)\b',
   }
 ]
 captures.2.patterns = [
   {
     name = "meta.keyword.blend-factor keyword.other.migoto",
-    match = '\b(?i)(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b',
+    match = '(?i)\b(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b',
   }
 ]
 captures.3.patterns = [
   {
     name = "meta.keyword.blend-factor keyword.other.migoto",
-    match = '\b(?i)(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b',
+    match = '(?i)\b(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b',
   }
 ]
 captures.4.name = "meta.keyword.blend-operator keyword.operator.migoto"
@@ -688,16 +688,16 @@ patterns = [{include = "#operational-expression"}]
 [[repository.resource.patterns]]
 # Includes ConstantBufferSlot, VertexBufferSlot, IndexBuffer, and BackBuffers
 name = "variable.language.buffer.migoto"
-match = '\b(?i)(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b'
+match = '(?i)\b(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b'
 
 [[repository.resource.patterns]]
 # TextureSlot, UAVSlot, Render targets
 name = "variable.language.shader-slot.migoto"
-match = '\b(?i)([pc]s-u\d|s?o\d|od|[vhdgpc]s(?:-t\d{1,3}))\b'
+match = '(?i)\b([pc]s-u\d|s?o\d|od|[vhdgpc]s(?:-t\d{1,3}))\b'
 
 [[repository.resource.patterns]]
 name = "variable.language.resource-identifier.migoto"
-match = '\b(?i)(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b'
+match = '(?i)\b(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b'
 
 [[repository.resource.patterns]]
 include = "#custom-resource"
@@ -742,7 +742,7 @@ include = "#shader-identifier"
 [[repository.operand.patterns]]
 # Numbered Scissor Rectangle. The non-numbered ones corresponding to 0 are in override parameters
 name = "constant.language.scissor-rectangle.migoto"
-match = '\b(?i)(scissor\d+_(?:left|top|right|bottom))\b'
+match = '(?i)\b(scissor\d+_(?:left|top|right|bottom))\b'
 
 [[repository.operand.patterns]]
 # constant instead of variable scope name because their use is more like language constants
@@ -777,7 +777,7 @@ match = '(?i)\b(sli|hunting|frame_(?:time|number|analysis)|stereo_(?:active|avai
 
 [repository.shader-identifier]
 name = "variable.language.shader-identifier.migoto"
-match = '\b(?i)([vhdgpc]s)\b'
+match = '(?i)\b([vhdgpc]s)\b'
 
 [repository.property-access-expression]
 name = "meta.expression.property-access"
@@ -807,7 +807,7 @@ patterns = [
 ]
 
 [repository.builtin-function-call]
-begin = '(?xi) (?! [^\r\n]+ -> ) (\w+) ( \( )'
+begin = '(?xi) (?<! -> ) (\b \w+ ) ( \( )'
 beginCaptures.1.name = "support.function.builtin.migoto"
 beginCaptures.2.name = "punctuation.parenthesis.begin.migoto"
 end = '\)'
@@ -819,13 +819,13 @@ name = "meta.variable.named"
 match = '''(?xi)
 (\$)
 (?! Pool
-  (?:\\[^=$\r\n]+\\)?
+  (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?
   (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
   (?: \[ [^\r\n\[\]]+ \] )
 )
 (?:
   ([a-z_]\w+|[a-z]) |
-  (\\[^=$\r\n]+\\) ([a-z_]\w+|[a-z_])
+  (\\[^\\=$\r\n]+(?:\\[\w.]+)*\\) ([a-z_]\w+|[a-z_])
 )'''
 # captures for a normal variable
 captures.1.name = "punctuation.definition.variable.migoto"
@@ -839,7 +839,7 @@ name = "meta.variable.pooled"
 match = '''(?xi)
 (\$)
 ( Pool
-  (?:\\[^=$\r\n]+\\)?
+  (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?
   (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
   (?: \[ [^\r\n\[\]]+ \] )
 )(?!\\)'''
@@ -848,30 +848,30 @@ captures.2.patterns = [{include = "#resource-pool"}]
 
 [repository.callable-commandlist]
 name = "meta.function-call.commands"
-match = '''\b(?i)((?:BuiltIn)?CommandList)(\\[^=$\r\n]+\\)?([^=$,\r\n]+)\b(?!\\)'''
+match = '''(?i)\b((?:BuiltIn)?CommandList)(\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?([^=$,\r\n]+)\b(?!\\)'''
 captures.1.name = "entity.name.function.section-type.migoto"
 captures.2.patterns = [{include = "#namespace"}]
 captures.3.patterns = [{include = "#section-identifier"}]
 
 [repository.callable-customshader]
 name = "meta.function-call.shader"
-match = '''\b(?i)((?:BuiltIn)?CustomShader)(\\[^=$\r\n]+\\)?([^=$,\r\n]+)\b(?!\\)'''
+match = '''(?i)\b((?:BuiltIn)?CustomShader)(\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?([^=$,\r\n]+)\b(?!\\)'''
 captures.1.name = "entity.name.function.section-type.migoto"
 captures.2.patterns = [{include = "#namespace"}]
 captures.3.patterns = [{include = "#section-identifier"}]
 
 [repository.custom-resource]
 name = "meta.variable.custom-resource"
-match = '''\b(?i)(Resource)(\\[^=$\r\n]+\\)?([^-/&!>|<( )$=,\[\]\r\n]+)(?!\\)'''
+match = '''(?i)\b(Resource)(\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?([^-/&!>|<( )$=,\[\]\r\n]+)(?!\\)'''
 captures.1.name = "entity.name.tag.migoto"
 captures.2.patterns = [{include = "#namespace"}]
 captures.3.patterns = [{include = "#resource-identifier"}]
 
 [repository.resource-pool-base]
 name = "meta.variable.resource-pool"
-match = '''\b(?xi)
+match = '''(?xi)\b
 (Pool)
-(\\[^=$\r\n]+\\)?
+(\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)?
 ([^-/&!>|<( )$=,\[\]\r\n]+)
 (?!\\)'''
 captures.1.name = "entity.name.tag.migoto"
@@ -880,15 +880,15 @@ captures.3.patterns = [{include = "#resource-identifier"}]
 
 [repository.resource-pool]
 name = "meta.variable.resource-pool"
-match = '''\b(?xi)
-( Pool (?:\\[^=$\r\n]+\\)? (?: [^-/&!>|<( )$=,\[\]\r\n]+ ) )
-( \[ [^\r\n\[\]]+ \] )
+match = '''(?xi)\b
+( Pool (?:\\[^\\=$\r\n]+(?:\\[\w.]+)*\\)? (?: [^-/&!>|<( )$=,\[\]\r\n]+ ) )
+( \[ [^\[\]\r\n]+ \] )
 (?!\\)'''
 captures.1.patterns = [{include = "#resource-pool-base"}]
 captures.2.patterns = [
   {
     name = "meta.expression.indexing",
-    match = '(?i)(\[)(.+)(\])',
+    match = '(?i)(\[)([^\[\]\r\n]+)(\])',
     captures.1.name = "punctuation.bracket.begin.migoto",
     captures.2.patterns = [{include = "#static-operational-expression"}],
     captures.3.name = "punctuation.bracket.end.migoto",
@@ -901,7 +901,12 @@ begin = '\\'
 beginCaptures.0.name = "punctuation.separator.namespace.migoto"
 end = '\\'
 endCaptures.0.name = "punctuation.separator.namespace.migoto"
-patterns = [{name = "entity.name.namespace.migoto", match = '[^=$\r\n]+(?=\\)'}]
+patterns = [
+  {
+    name = "entity.name.namespace.migoto",
+    match = '[^\\=$\r\n]+(?:\\[\w.]+)*(?=\\)',
+  }
+]
 
 [repository.section-identifier]
 name = "entity.name.function.migoto"
@@ -932,8 +937,7 @@ match = '(?i)\b(clipboard|hlsl|asm|regex|mono_snapshot|stereo_snapshot|snapshot_
 
 [repository.frame-analysis-opt]
 name = "meta.fixed-value.analysis-option variable.other.enummember.migoto"
-match = '''(?xi)
-\b
+match = '''(?xi)\b
 (hold|stereo|mono|
  dump_(?:rt|depth|tex|[cvi]b)|jp(?:s|e?g)|(?:jp(?:s|e?g)_)?dds|buf|txt|desc|clear_rt|persist|
  filename_(?:reg|handle)|log|dump_on_(?:unmap|update)|deferred_ctx_(?:immediate|accurate)|
@@ -1010,7 +1014,7 @@ patterns = [
 
 [repository.dxgi-format]
 name = "meta.enum-value.directx support.type.dxgi-format.migoto"
-match = '''\b(?xi)(?:DXGI_FORMAT_)?(UNKNOWN|R32G32B32A32_TYPELESS|R32G32B32A32_FLOAT|R32G32B32A32_UINT|R32G32B32A32_SINT|R32G32B32_TYPELESS|R32G32B32_FLOAT|R32G32B32_UINT|R32G32B32_SINT|R16G16B16A16_TYPELESS|R16G16B16A16_FLOAT|R16G16B16A16_UNORM|R16G16B16A16_UINT|R16G16B16A16_SNORM|R16G16B16A16_SINT
+match = '''(?xi)\b(?:DXGI_FORMAT_)?(UNKNOWN|R32G32B32A32_TYPELESS|R32G32B32A32_FLOAT|R32G32B32A32_UINT|R32G32B32A32_SINT|R32G32B32_TYPELESS|R32G32B32_FLOAT|R32G32B32_UINT|R32G32B32_SINT|R16G16B16A16_TYPELESS|R16G16B16A16_FLOAT|R16G16B16A16_UNORM|R16G16B16A16_UINT|R16G16B16A16_SNORM|R16G16B16A16_SINT
 |R32G32_TYPELESS|R32G32_FLOAT|R32G32_UINT|R32G32_SINT|R32G8X24_TYPELESS|D32_FLOAT_S8X24_UINT|R32_FLOAT_X8X24_TYPELESS|X32_TYPELESS_G8X24_UINT|R10G10B10A2_TYPELESS|R10G10B10A2_UNORM|R10G10B10A2_UINT|R11G11B10_FLOAT|R8G8B8A8_TYPELESS|R8G8B8A8_UNORM|R8G8B8A8_UNORM_SRGB
 |R8G8B8A8_UINT|R8G8B8A8_SNORM|R8G8B8A8_SINT|R16G16_TYPELESS|R16G16_FLOAT|R16G16_UNORM|R16G16_UINT|R16G16_SNORM|R16G16_SINT|R32_TYPELESS|D32_FLOAT|R32_FLOAT|R32_UINT|R32_SINT|R24G8_TYPELESS|D24_UNORM_S8_UINT|R24_UNORM_X8_TYPELESS|X24_TYPELESS_G8_UINT|R8G8_TYPELESS
 |R8G8_UNORM|R8G8_UINT|R8G8_SNORM|R8G8_SINT|R16_TYPELESS|R16_FLOAT|D16_UNORM|R16_UNORM|R16_UINT|R16_SNORM|R16_SINT|R8_TYPELESS|R8_UNORM|R8_UINT|R8_SNORM|R8_SINT|A8_UNORM|R1_UNORM|R9G9B9E5_SHAREDEXP|R8G8_B8G8_UNORM|G8R8_G8B8_UNORM|BC1_TYPELESS|BC1_UNORM|BC1_UNORM_SRGB
@@ -1019,7 +1023,7 @@ match = '''\b(?xi)(?:DXGI_FORMAT_)?(UNKNOWN|R32G32B32A32_TYPELESS|R32G32B32A32_F
 
 [repository.hlsl-semantic]
 name = "meta.enum-value.hlsl support.type.semantic.migoto"
-match = '''\b(?xi)(?:
+match = '''(?xi)\b(?:
   (?:
     BINORMAL|BLENDINDICES|BLENDWEIGHT|
     COLOR|NORMAL|POSITION|TANGENT|

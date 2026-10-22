@@ -13,8 +13,9 @@ kvp_section_names = '\s*(?:(?:Resource|Key|Preset).+(?=\s*\])|Include.*(?=\s*\])
 special_section_names = '\s*(?:Constants|(?:Pool|ShaderRegex).+(?=\s*\]))'
 ws = '[ \t]'
 namespace_path = '[^\s>\\|\/<?:*="$][^>\\|\/<?:*=$\r\n]+(?:[\\\/][^>\\|\/<?:*=$\r\n]+)*'
-namespace = '[^=$&>|<\r\n]+'
-custom_section_name = '[^=$,\r\n]+'
+namespace = '[^\\=$\r\n]+(?:\\[\w.]+)*'
+custom_resource_name = '[^-\\/&!>|<( )$=,\[\]\r\n]+'
+custom_section_name = '[^=$\\,\r\n]+'
 var = '[a-z_]\w+|[a-z]'
 ident = '[a-z0-9]\w+'
 line_end_context = '(?:\n|(?<=\n))'
@@ -897,7 +898,7 @@ match = '''(?xi)
 ^{{ws}}*
 (?=
   (?: (?:pre|post) \s+)?
-  [a-z][^\r\n]+? -> \w+\( .+? \)
+  [a-z][^\r\n]+? -> \w+\( [^()\r\n]*? \)
   \s* =(?!=) \s*
   [^\r\n]+
 )'''
@@ -1078,7 +1079,7 @@ push = [
     scope = "meta.keyword.blend-operator keyword.operator.migoto",
   },
   {
-    match = '\b(?i)(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b',
+    match = '(?i)\b(zero|one|(?:inv_)?(?:src1?|dest)_(?:color|alpha)|src_alpha_sat|(?:inv_)?blend_factor)\b',
     scope = "meta.keyword.blend-factor keyword.other.migoto",
   },
   {
@@ -1224,16 +1225,16 @@ push = [
 [[contexts.resource]]
 # Includes ConstantBufferSlot, VertexBufferSlot, IndexBuffer, and BackBuffers
 scope = "variable.language.buffer.migoto"
-match = '\b(?i)(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b'
+match = '(?i)\b(?:[vhdgpc]s-cb\d{1,2}|vb\d|ib|(?:[rf]_)?bb)\b'
 
 [[contexts.resource]]
 # TextureSlot, UAVSlot, Render targets
 scope = "variable.language.shader-slot.migoto"
-match = '\b(?i)([pc]s-u\d|s?o\d|od|[vhdgpc]s(?:-t\d{1,3}))\b'
+match = '(?i)\b([pc]s-u\d|s?o\d|od|[vhdgpc]s(?:-t\d{1,3}))\b'
 
 [[contexts.resource]]
 scope = "variable.language.resource-identifier.migoto"
-match = '\b(?i)(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b'
+match = '(?i)\b(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b'
 
 [[contexts.resource]]
 include = "custom-resource"
@@ -1247,11 +1248,11 @@ include = "resource-pool"
 include = "constant"
 
 [[contexts.operand]]
-match = '\b(?i)D3D11_BIND_\w+\b'
+match = '(?i)\bD3D11_BIND_\w+\b'
 scope = "meta.enum-value.directx variable.otherenummember.migoto"
 
 [[contexts.operand]]
-match = '\b(?i)DXGI_FORMAT_\w+\b'
+match = '(?i)\bDXGI_FORMAT_\w+\b'
 scope = "meta.enum-value.directx support.type.dxgi-format.migoto"
 
 [[contexts.operand]]
@@ -1278,7 +1279,7 @@ include = "shader-identifier"
 [[contexts.operand]]
 # Numbered Scissor Rectangle. The non-numbered ones corresponding to 0 are in override parameters
 scope = "constant.language.scissor-rectangle.migoto"
-match = '\b(?i)(scissor\d+_(?:left|top|right|bottom))\b'
+match = '(?i)\b(scissor\d+_(?:left|top|right|bottom))\b'
 
 [[contexts.operand]]
 # constant instead of variable scope name because their use is more like language constants
@@ -1358,10 +1359,10 @@ push = [
 ]
 
 [[contexts.builtin-function-call]]
-match = '(?xi)(?! [^\r\n]+ -> ) (?= \w+ \( )'
+match = '(?xi)(?<! -> ) (?= \b \w+ \( )'
 push = [
   {
-    match = '(?i)\w+(?=\()',
+    match = '(?i)\b\w+(?=\()',
     scope = "support.function.builtin.migoto",
   },
   {
@@ -1381,8 +1382,8 @@ push = [
 [[contexts.named-variable]]
 match = '''(?xi)
 (?! \$Pool
-  (?: \\[^=$\r\n]+\\ )?
-  (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
+  (?: \\{{namespace}}\\ )?
+  (?: {{custom_resource_name}} )
   (?: \[ [^\r\n\[\]]+ \] )
 )
 (?= \$ (?:\\{{namespace}}\\)? (?:{{var}}) \b )'''
@@ -1409,8 +1410,8 @@ push = [
 [[contexts.pooled-variable]]
 match = '''(?xi)
 (?= \$Pool
-  (?: \\[^=$\r\n]+\\ )?
-  (?: [^-/&!>|<( )$=,\[\]\r\n]+ )
+  (?: \\{{namespace}}\\ )?
+  (?: {{custom_resource_name}} )
   (?: \[ [^\r\n\[\]]+ \] )
 )(?!\\)'''
 push = [
@@ -1598,7 +1599,7 @@ match = '{{custom_section_name}}'
 
 [[contexts.resource-identifier]]
 scope = "entity.name.class.migoto"
-match = '[^-/&!>|<( )$=,\[\]\r\n]+'
+match = '{{custom_resource_name}}'
 
 [[contexts.ini-parameter]]
 scope = "variable.parameter.migoto"

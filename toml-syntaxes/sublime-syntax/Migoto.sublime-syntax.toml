@@ -946,7 +946,7 @@ push = [
     scope = "meta.command-list.priority keyword.control.directive.migoto",
   },
   {include = "resource"},
-  {include = "resource-pool-base"},
+  {include = "resource-pool"},
   {
     match = '=',
     scope = "keyword.operator.assignment.migoto",
@@ -1136,7 +1136,7 @@ include = "property-method-call"
 include = "resource"
 
 [[contexts.resource-usage-expr]]
-include = "resource-pool-base"
+include = "resource-pool"
 
 [[contexts.resource-usage-modifier]]
 match = '''(?xi)\b(
@@ -1240,7 +1240,7 @@ match = '(?i)\b(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b'
 include = "custom-resource"
 
 [[contexts.resource]]
-include = "resource-pool"
+include = "indexed-pool"
 
 ### Normal operands
 
@@ -1271,7 +1271,7 @@ include = "resource"
 
 # this is separate from resource because they aren't used in resource usage expressions
 [[contexts.operand]]
-include = "resource-pool-base"
+include = "resource-pool"
 
 [[contexts.operand]]
 include = "shader-identifier"
@@ -1324,7 +1324,7 @@ push = [
     match = '(?xi)(?= \b {{resource_copy_targets}} -> \w+ )',
     push = [
       {include = "resource"},
-      {include = "resource-pool-base"},
+      {include = "resource-pool"},
       {include = "shader-identifier"},
       {
         match = '(?i)(->)(\w+)\b',
@@ -1420,7 +1420,7 @@ push = [
     match = '\$',
     scope = "punctuation.definition.variable.migoto",
   },
-  {include = "resource-pool"},
+  {include = "indexed-pool"},
   {
     match = '(?=[-/&!>|<\s=$\[\],()])',
     pop = true,
@@ -1499,7 +1499,7 @@ push = [
   },
 ]
 
-[[contexts.resource-pool-base]]
+[[contexts.resource-pool]]
 match = '''(?xi)
 (?=
   Pool
@@ -1523,7 +1523,7 @@ push = [
   },
 ]
 
-[[contexts.resource-pool]]
+[[contexts.indexed-pool]]
 match = '''(?xi)
 (?=
   Pool
@@ -1532,7 +1532,7 @@ match = '''(?xi)
   \[ [^\r\n\[\]]+ \]
 )'''
 push = [
-  {meta_content_scope = "meta.variable.resource-pool"},
+  {meta_content_scope = "meta.variable.indexed-pool"},
   {
     match = '(?i)\bPool',
     scope = "entity.name.label.migoto",

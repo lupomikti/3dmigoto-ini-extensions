@@ -243,7 +243,7 @@ match = '''(?xi)
   take_screenshot|reload_fixes|(?:reload|wipe_user)_config|show_original|
   monitor_performance|freeze_performance_monitor|tune[123]_(?:up|down)|
   analyse_frame|toggle_full_screen|force_full_screen_on_key|toggle_input|
-  run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|
+  run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|reset_per_frame_limits|direct_mode_eye|
   draw(?:indexed|instanced|indexedinstanced|instancedindirect|indexedinstancedindirect)?|dispatch(?:indirect)?|
   vb\d|ib|(?:[rf]_)?bb|s?o\d|od|
   (?<!$)[xyzw]\d{0,3}|

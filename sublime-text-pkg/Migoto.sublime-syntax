@@ -31,7 +31,7 @@ variables:
       monitor_performance | freeze_performance_monitor | tune[123]_(?:up|down) |
       analyse_frame | toggle_full_screen | force_full_screen_on_key | toggle_input
   instructions: |2
-      run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|
+      run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|reset_per_frame_limits|direct_mode_eye|
       draw(?:indexed|instanced|indexedinstanced|instancedindirect|indexedinstancedindirect)?|dispatch(?:indirect)?
   resource_copy_targets: |2
       [vgdhpcsturfibo\-\d_]+\b|
@@ -599,7 +599,7 @@ contexts:
         - match: (?i)\b(pre|post)\b
           scope: meta.command-list.priority keyword.control.directive.migoto
         - include: resource
-        - include: resource-pool-base
+        - include: resource-pool
         - match: =
           scope: keyword.operator.assignment.migoto
           push:
@@ -718,7 +718,7 @@ contexts:
     - include: resource-usage-modifier
     - include: property-method-call
     - include: resource
-    - include: resource-pool-base
+    - include: resource-pool
   resource-usage-modifier:
     - match: |-
         (?xi)\b(
@@ -787,7 +787,7 @@ contexts:
     - scope: variable.language.resource-identifier.migoto
       match: (?i)\b(this|null|(?:ini|stereo)params|cursor_(?:mask|color))\b
     - include: custom-resource
-    - include: resource-pool
+    - include: indexed-pool
   operand:
     - include: constant
     - match: (?i)\bD3D11_BIND_\w+\b
@@ -798,7 +798,7 @@ contexts:
     - include: ini-parameter
     - include: property-access-expr
     - include: resource
-    - include: resource-pool-base
+    - include: resource-pool
     - include: shader-identifier
     - scope: constant.language.scissor-rectangle.migoto
       match: (?i)\b(scissor\d+_(?:left|top|right|bottom))\b
@@ -827,13 +827,13 @@ contexts:
     - scope: variable.language.shader-identifier.migoto
       match: (?i)\b[vhdgpc]s\b
   property-access-expr:
-    - match: (?xi)(?= [a-z][^\r\n]+? -> \w+ )(?!\\)
+    - match: (?xi)(?= [a-z][^\r\n]+? -> \w+ )(?! \\ | \( )
       push:
         - meta_scope: meta.expression.property-access
         - match: (?xi)(?= \b {{resource_copy_targets}} -> \w+ )
           push:
             - include: resource
-            - include: resource-pool-base
+            - include: resource-pool
             - include: shader-identifier
             - match: (?i)(->)(\w+)\b
               captures:
@@ -896,12 +896,12 @@ contexts:
           (?: \\{{namespace}}\\ )?
           (?: {{custom_resource_name}} )
           (?: \[ [^\r\n\[\]]+ \] )
-        )(?!\\)
+        )
       push:
         - meta_scope: meta.variable.pooled
         - match: \$
           scope: punctuation.definition.variable.migoto
-        - include: resource-pool
+        - include: indexed-pool
         - match: (?=[-/&!>|<\s=$\[\],()])
           pop: true
   callable-commandlist:
@@ -910,8 +910,7 @@ contexts:
         (?=
           (?:BuiltIn)?CommandList
           (?:\\{{namespace}}\\)?
-          {{custom_section_name}}
-          \b (?!\\)
+          {{custom_section_name}}\b
         )
       push:
         - meta_scope: meta.function-call.commands
@@ -929,8 +928,7 @@ contexts:
         (?=
           (?:BuiltIn)?CustomShader
           (?:\\{{namespace}}\\)?
-          {{custom_section_name}}
-          \b (?!\\)
+          {{custom_section_name}}\b
         )
       push:
         - meta_content_scope: meta.function-call.shader
@@ -948,8 +946,7 @@ contexts:
         (?=
           Resource
           (?:\\{{namespace}}\\)?
-          [^-\\/&!|<( )$=,\r\n]+
-          \b (?!\\)
+          {{custom_resource_name}}\b
         )
       push:
         - meta_content_scope: meta.variable.custom-resource
@@ -961,14 +958,13 @@ contexts:
         - include: resource-identifier
         - match: (?=[-/&!>|<\s=$,()])
           pop: true
-  resource-pool-base:
+  resource-pool:
     - match: |-
         (?xi)
         (?=
           Pool
           (?:\\{{namespace}}\\)?
-          [^-\\/&!|<( )$=,\r\n]+
-          (?!\\)
+          {{custom_resource_name}}\b
         )
       push:
         - meta_content_scope: meta.variable.resource-pool
@@ -980,18 +976,17 @@ contexts:
         - include: resource-identifier
         - match: (?=[-/&!>|<\s=$,\[\]()])
           pop: true
-  resource-pool:
+  indexed-pool:
     - match: |-
         (?xi)
         (?=
           Pool
           (?:\\{{namespace}}\\)?
-          [^-\\/&!|<( )$=,\r\n]+
+          {{custom_resource_name}}
           \[ [^\r\n\[\]]+ \]
-          (?!\\)
         )
       push:
-        - meta_content_scope: meta.variable.resource-pool
+        - meta_content_scope: meta.variable.indexed-pool
         - match: (?i)\bPool
           scope: entity.name.label.migoto
         - match: (?=\\)

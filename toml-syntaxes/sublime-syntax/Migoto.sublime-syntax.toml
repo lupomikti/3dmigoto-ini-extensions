@@ -31,7 +31,7 @@ keybinding_keys = '''
   analyse_frame | toggle_full_screen | force_full_screen_on_key | toggle_input
 '''
 instructions = '''
-  run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|
+  run|checktextureoverride|(?:exclude_)?preset|handling|clear|special|dump|store|reset_per_frame_limits|direct_mode_eye|
   draw(?:indexed|instanced|indexedinstanced|instancedindirect|indexedinstancedindirect)?|dispatch(?:indirect)?
 '''
 resource_copy_targets = '''

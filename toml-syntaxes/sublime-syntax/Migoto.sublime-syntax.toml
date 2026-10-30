@@ -1355,7 +1355,7 @@ push = [
         pop = 2,
       },
     ],
-  }
+  },
 ]
 
 [[contexts.builtin-function-call]]
@@ -1376,7 +1376,7 @@ push = [
         pop = 2,
       },
     ],
-  }
+  },
 ]
 
 [[contexts.named-variable]]
@@ -1413,7 +1413,7 @@ match = '''(?xi)
   (?: \\{{namespace}}\\ )?
   (?: {{custom_resource_name}} )
   (?: \[ [^\r\n\[\]]+ \] )
-)(?!\\)'''
+)'''
 push = [
   {meta_scope = "meta.variable.pooled"},
   {
@@ -1432,8 +1432,7 @@ match = '''(?xi)
 (?=
   (?:BuiltIn)?CommandList
   (?:\\{{namespace}}\\)?
-  {{custom_section_name}}
-  \b (?!\\)
+  {{custom_section_name}}\b
 )'''
 push = [
   {meta_scope = "meta.function-call.commands"},
@@ -1457,8 +1456,7 @@ match = '''(?xi)
 (?=
   (?:BuiltIn)?CustomShader
   (?:\\{{namespace}}\\)?
-  {{custom_section_name}}
-  \b (?!\\)
+  {{custom_section_name}}\b
 )'''
 push = [
   {meta_content_scope = "meta.function-call.shader"},
@@ -1482,8 +1480,7 @@ match = '''(?xi)
 (?=
   Resource
   (?:\\{{namespace}}\\)?
-  [^-\\/&!|<( )$=,\r\n]+
-  \b (?!\\)
+  {{custom_resource_name}}\b
 )'''
 push = [
   {meta_content_scope = "meta.variable.custom-resource"},
@@ -1507,8 +1504,7 @@ match = '''(?xi)
 (?=
   Pool
   (?:\\{{namespace}}\\)?
-  [^-\\/&!|<( )$=,\r\n]+
-  (?!\\)
+  {{custom_resource_name}}\b
 )'''
 push = [
   {meta_content_scope = "meta.variable.resource-pool"},
@@ -1532,9 +1528,8 @@ match = '''(?xi)
 (?=
   Pool
   (?:\\{{namespace}}\\)?
-  [^-\\/&!|<( )$=,\r\n]+
+  {{custom_resource_name}}
   \[ [^\r\n\[\]]+ \]
-  (?!\\)
 )'''
 push = [
   {meta_content_scope = "meta.variable.resource-pool"},
